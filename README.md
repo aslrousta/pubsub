@@ -1,2 +1,3 @@
-# pubsub
-Generic PubSub Pattern in Go
+# Generic PubSub
+
+This library provides a generic implementation of pub-sub pattern using channels in Go.
