@@ -5,13 +5,13 @@ import "sync"
 // PubSub implements pub-sub pattern using channels.
 type PubSub[T comparable, M any] struct {
 	mutex         sync.RWMutex
-	subscriptions map[T][]chan M
+	subscriptions map[T][]chan<- M
 }
 
 // New instantiates a new pub-sub.
 func New[T comparable, M any]() *PubSub[T, M] {
 	return &PubSub[T, M]{
-		subscriptions: make(map[T][]chan M),
+		subscriptions: make(map[T][]chan<- M),
 	}
 }
 
@@ -25,26 +25,26 @@ func (ps *PubSub[T, M]) Publish(topic T, msg M) {
 	}
 
 	for _, ch := range ps.subscriptions[topic] {
-		go func(ch chan M) {
+		go func(ch chan<- M) {
 			ch <- msg
 		}(ch)
 	}
 }
 
 // Subscribe subscribes to receive messages in the topic on ch.
-func (ps *PubSub[T, M]) Subscribe(topic T, ch chan M) {
+func (ps *PubSub[T, M]) Subscribe(topic T, ch chan<- M) {
 	ps.mutex.Lock()
 	defer ps.mutex.Unlock()
 
 	if subs, ok := ps.subscriptions[topic]; ok {
 		ps.subscriptions[topic] = append(subs, ch)
 	} else {
-		ps.subscriptions[topic] = []chan M{ch}
+		ps.subscriptions[topic] = []chan<- M{ch}
 	}
 }
 
 // Unsubscribe removes the subscription on the topic.
-func (ps *PubSub[T, M]) Unubscribe(topic T, ch chan M) {
+func (ps *PubSub[T, M]) Unubscribe(topic T, ch chan<- M) {
 	ps.mutex.Lock()
 	defer ps.mutex.Unlock()
 
